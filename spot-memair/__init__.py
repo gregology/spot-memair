@@ -26,6 +26,6 @@ conn = http.client.HTTPSConnection(host='memair.herokuapp.com', port=443)
 headers = {"Content-type": "application/json"}
 conn.request("POST", "/api/v1/bulk/locations", json.dumps({'json': parsed_locations, 'access_token': options.memairkey}), headers)
 content = conn.getresponse()
-response = json.loads(content.read())
+response = json.loads(content.read().decode('utf8'))
 print(response)
 conn.close()
