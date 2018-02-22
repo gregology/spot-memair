@@ -22,7 +22,7 @@ for i, location in enumerate(feed.messages):
   }
   parsed_locations.append(params)
 
-conn = http.client.HTTPSConnection(host='memair.herokuapp.com', port=443)
+conn = http.client.HTTPSConnection(host='memair.com', port=443)
 headers = {"Content-type": "application/json"}
 conn.request("POST", "/api/v1/bulk/locations", json.dumps({'json': parsed_locations, 'access_token': options.memairkey}), headers)
 content = conn.getresponse()
