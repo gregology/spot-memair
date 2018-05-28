@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='spot-memair',
-    version='2018.2.22.0',
+    version='2018.5.28.0',
     description='updates memair with spot data',
     long_description=open('README.rst').read(),
     url='https://github.com/gregology/spot-memair',
