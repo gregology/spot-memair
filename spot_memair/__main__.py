@@ -1,6 +1,7 @@
 from optparse import OptionParser
 from spot_sdk import Feed
-import http.client
+import timestring
+import requests
 import json
 
 # Get input params
@@ -12,20 +13,27 @@ parser.add_option("-m", "--memairkey", dest="memairkey", help="memair api key", 
 feed = Feed(options.spotkey)
 feed.collect()
 
-parsed_locations = []
-for i, location in enumerate(feed.messages):
-  params = {
-    'latitude':  str(location.latitude),
-    'longitude': str(location.longitude),
-    'timestamp': str(location.datetime),
-    'source':    'Spot: ' + location.type,
+def get_latest_timestamp():
+  query = "{Locations(first: 1, order: timestamp_desc){timestamp, source}}"
+  data = {
+  'query' : query,
+  'access_token': options.memairkey
   }
-  parsed_locations.append(params)
+  r = requests.post("https://memair.com/graphql", data)
+  response = json.loads(r.text)
+  return timestring.Date(response['data']['Locations'][0]['timestamp']).date
 
-conn = http.client.HTTPSConnection(host='memair.com', port=443)
-headers = {"Content-type": "application/json"}
-conn.request("POST", "/api/v1/bulk/locations", json.dumps({'json': parsed_locations, 'access_token': options.memairkey}), headers)
-content = conn.getresponse()
-response = json.loads(content.read().decode('utf8'))
-print(response)
-conn.close()
+latest_timestamp = get_latest_timestamp()
+
+mutations = []
+for i, location in enumerate(feed.messages):
+  if timestring.Date(location.datetime).date > latest_timestamp:
+    mutations.append('loc' + str(i) + ': CreateLocation(lat:' + str(location.latitude) + ', lon:' + str(location.longitude) + ', timestamp: "' + str(location.datetime) + '", source: "Spot: ' + location.type + '") {id}')
+
+if len(mutations) > 0:
+  data = {
+  'query' : 'mutation{' + ' '.join(mutations) + '}',
+  'access_token': options.memairkey
+  }
+  r = requests.post("https://memair.com/graphql", data)
+  print(json.loads(r.text))
